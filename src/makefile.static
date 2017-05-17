@@ -1,0 +1,175 @@
+# luasocket src/makefile.static
+#
+# Definitions in this section can be overriden on the command line or in the
+# environment.
+#
+#   make PLAT=unix LUAINC=/.../include/lua DEBUG=DEBUG LUAV=5.3
+
+# PLAT: unix win
+# platform to build for
+PLAT ?= unix
+
+# LUAV: 5.1 5.2 5.3
+# lua version to build against
+LUAV ?= 5.3
+
+# DEBUG: NODEBUG DEBUG
+# debug mode causes luasocket to collect and returns timing information useful
+# for testing and debugging luasocket itself
+DEBUG ?= NODEBUG
+
+# LUAINC: where lua headers are found for the build
+LUAINC ?= /usr/include/lua
+
+# DIST: target directory for the library files (ar and lua files)
+DIST ?= output
+
+# CFLAGS: compile flags
+override CFLAGS += \
+	-I$(LUAINC) \
+	-Wall -Wshadow -Wextra -Wimplicit \
+	-DLUASOCKET_$(DEBUG) \
+	-DLUASOCKET_API='' \
+	-DUNIX_API='' \
+	-DMIME_API=''
+
+#------
+# Output file names
+#
+O = o
+A = a
+
+#------
+# Custom prefix to avoid collisions
+#
+LIBPREFIX ?= libluasocket-
+
+SOCKET_OUT = $(LIBPREFIX)socket.$(A)
+ifeq ($(PLAT),unix)
+SERIAL_OUT = $(LIBPREFIX)serial.$(A)
+PLAT_OUT = $(LIBPREFIX)unix.$(A)
+endif
+MIME_OUT = $(LIBPREFIX)mime.$(A)
+
+#------
+# Toolchain paths
+#
+CC ?= gcc
+AR ?= ar
+
+#------
+# Modules belonging to socket-core
+#
+SOCKET_unix = usocket
+SOCKET_win = wsocket
+SOCKET_OBJS = \
+	luasocket.$(O) \
+	timeout.$(O) \
+	buffer.$(O) \
+	io.$(O) \
+	auxiliar.$(O) \
+	compat.$(O) \
+	options.$(O) \
+	inet.$(O) \
+	$(SOCKET_$(PLAT)).$(O) \
+	except.$(O) \
+	select.$(O) \
+	tcp.$(O) \
+	udp.$(O)
+
+#------
+# Modules belonging mime-core
+#
+MIME_OBJS = \
+	mime.$(O) \
+	compat.$(O)
+
+#------
+# Modules belonging unix (local domain sockets)
+#
+UNIX_OBJS = \
+	buffer.$(O) \
+	auxiliar.$(O) \
+	options.$(O) \
+	timeout.$(O) \
+	io.$(O) \
+	usocket.$(O) \
+	unixstream.$(O) \
+	unixdgram.$(O) \
+	compat.$(O) \
+	unix.$(O)
+
+WIN_OBJS =
+
+#------
+# Modules belonging to serial (device streams)
+#
+ifeq ($(PLAT),unix)
+SERIAL_OBJS = \
+	buffer.$(O) \
+	auxiliar.$(O) \
+	options.$(O) \
+	timeout.$(O) \
+	io.$(O) \
+	usocket.$(O) \
+	serial.$(O)
+endif
+
+#------
+# Lua sources
+#
+LSOCK_LUA_SOCKET = \
+	http.lua \
+	url.lua \
+	tp.lua \
+	ftp.lua \
+	headers.lua \
+	smtp.lua
+LSOCK_LUA_TOP = \
+	ltn12.lua \
+	socket.lua \
+	mime.lua
+
+#------
+# Lua C binding wrappers
+#
+LSOCK_HEADERS = \
+	luasocket.h \
+	mime.h
+
+#------
+# Targets
+#
+all: $(SOCKET_OUT) $(SERIAL_OUT) $(MIME_OUT) $(PLAT_OUT)
+	rm -rf $(DIST)
+	mkdir -p $(DIST)/lib $(DIST)/lua $(DIST)/include
+	cp $^ $(DIST)/lib
+	cp $(LSOCK_LUA_TOP) $(DIST)/lua
+	mkdir $(DIST)/lua/socket
+	cp $(LSOCK_LUA_SOCKET) $(DIST)/lua/socket
+	cp $(LSOCK_HEADERS) $(DIST)/include
+
+$(SOCKET_OUT): $(SOCKET_OBJS)
+	$(AR) rcs $@ $^
+
+$(MIME_OUT): $(MIME_OBJS)
+	$(AR) rcs $@ $^
+
+ifeq ($(PLAT),unix)
+$(SERIAL_OUT): $(SERIAL_OBJS)
+	$(AR) rcs $@ $^
+
+$(LIBPREFIX)unix.$(A): $(UNIX_OBJS)
+	$(AR) rcs $@ $^
+endif
+
+clean:
+	rm -rf $(DIST)
+	rm -f *.o *.a build.deps
+
+#------
+# List of dependencies
+#
+-include build.deps
+build.deps:
+	$(CC) $(CFLAGS) -MM *.[ch] > build.deps

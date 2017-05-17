@@ -1,6 +1,7 @@
 *.o
 *.so
 *.so.*
+*.a
 *.obj
 *.lib
 *.dll*
@@ -13,4 +14,6 @@ Release
 *.swp
 *.suo
 x64
-
+compile_commands.json
+build.deps
+src/output
