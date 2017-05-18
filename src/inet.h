@@ -18,7 +18,7 @@
 #include "socket.h"
 #include "timeout.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_PLATFORM_HAS_ATON)
 #define LUASOCKET_INET_ATON
 #endif
 
