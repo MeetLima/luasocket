@@ -99,8 +99,6 @@ UNIX_OBJS = \
 	compat.$(O) \
 	unix.$(O)
 
-WIN_OBJS =
-
 #------
 # Modules belonging to serial (device streams)
 #
@@ -170,6 +168,12 @@ clean:
 #------
 # List of dependencies
 #
+ALL_OBJS = $(SOCKET_OBJS) $(MIME_OBJS) $(UNIX_OBJS)
+ifeq ($(PLAT),unix)
+ALL_OBJS += $(SERIAL_OBJS)
+endif
+ALL_SRC = $(patsubst %.o,%.c,$(ALL_OBJS))
+
 -include build.deps
 build.deps:
-	$(CC) $(CFLAGS) -MM *.[ch] > build.deps
+	$(CC) $(CFLAGS) -MM $(ALL_SRC) > build.deps
