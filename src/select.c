@@ -138,7 +138,7 @@ static void collect_fd(lua_State *L, int tab, int itab,
         fd = getfd(L);
         if (fd != SOCKET_INVALID) {
             /* make sure we don't overflow the fd_set */
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
             if (n >= FD_SETSIZE)
                 luaL_argerror(L, tab, "too many sockets");
 #else

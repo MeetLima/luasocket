@@ -13,7 +13,7 @@
 #include "auxiliar.h"
 #include "timeout.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #else
 #include <time.h>
@@ -122,7 +122,7 @@ p_timeout timeout_markstart(p_timeout tm) {
 * Returns
 *   time in s.
 \*-------------------------------------------------------------------------*/
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 double timeout_gettime(void) {
     FILETIME ft;
     double t;
@@ -198,7 +198,7 @@ static int timeout_lua_gettime(lua_State *L)
 /*-------------------------------------------------------------------------*\
 * Sleep for n seconds.
 \*-------------------------------------------------------------------------*/
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 int timeout_lua_sleep(lua_State *L)
 {
     double n = luaL_checknumber(L, 1);
